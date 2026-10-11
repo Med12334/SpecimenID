@@ -16,13 +16,14 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
+    
     buildFeatures {
         compose = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.9"
     }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -49,4 +50,9 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
+
+    // Missing Dependencies for MainActivity and DatabaseModule
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("androidx.room:room-runtime:2.6.1")
 }
