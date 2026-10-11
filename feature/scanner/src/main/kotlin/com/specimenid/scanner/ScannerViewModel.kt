@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.specimenid.domain.AnalyzeIngredientStreamUseCase
 import com.specimenid.domain.Hazard
+import com.specimenid.domain.ScannedBlock
 import com.specimenid.domain.network.OpenFoodFactsApi
 import com.specimenid.vision.BarcodeAnalyzer
 import com.specimenid.vision.OcrAnalyzer
@@ -32,9 +33,9 @@ class ScannerViewModel @Inject constructor(
     val isBarcodeMode = MutableStateFlow(false)
 
     init {
-        // Écouteur pour le mode OCR (Texte)
+        // Mode OCR (Maintenant branché sur scannedBlocksFlow)
         viewModelScope.launch {
-            analyzeUseCase(ocrAnalyzer.scannedTextFlow).collect { hazards ->
+            analyzeUseCase(ocrAnalyzer.scannedBlocksFlow).collect { hazards ->
                 if (!isBarcodeMode.value) {
                     if (hazards.isNotEmpty()) _uiState.value = ScannerState.Danger(hazards)
                     else _uiState.value = ScannerState.Safe
@@ -42,7 +43,7 @@ class ScannerViewModel @Inject constructor(
             }
         }
 
-        // Écouteur pour le mode Code-barres (API)
+        // Mode API (Code-barres)
         viewModelScope.launch {
             barcodeAnalyzer.scannedBarcodeFlow
                 .distinctUntilChanged()
@@ -50,12 +51,13 @@ class ScannerViewModel @Inject constructor(
                     if (isBarcodeMode.value) {
                         _uiState.value = ScannerState.Scanning
                         try {
-                            // Appel réseau Retrofit
                             val response = api.getProductByBarcode(barcode)
                             val ingredients = response.product?.ingredients_text ?: ""
                             
-                            // Analyse des ingrédients téléchargés
-                            analyzeUseCase(flowOf(ingredients.lowercase())).collect { hazards ->
+                            // L'API ne renvoie pas de coordonnées, on crée donc un bloc artificiel sans boundingBox
+                            val simulatedBlock = listOf(ScannedBlock(ingredients.lowercase(), null))
+                            
+                            analyzeUseCase(flowOf(simulatedBlock)).collect { hazards ->
                                 if (hazards.isNotEmpty()) _uiState.value = ScannerState.Danger(hazards)
                                 else if (ingredients.isNotBlank()) _uiState.value = ScannerState.Safe
                             }

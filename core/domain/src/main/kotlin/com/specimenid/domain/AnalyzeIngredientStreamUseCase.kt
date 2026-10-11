@@ -12,27 +12,37 @@ import javax.inject.Inject
 class AnalyzeIngredientStreamUseCase @Inject constructor(
     private val allergenDao: AllergenDao
 ) {
-    // J'ai ajouté "soy" pour que le soja soit détecté
     private val activeAllergies = listOf("dairy", "gluten", "nuts", "soy")
 
-    operator fun invoke(ocrStream: Flow<String>): Flow<List<Hazard>> {
+    // Cette fonction gère maintenant une liste de ScannedBlock
+    operator fun invoke(ocrStream: Flow<List<ScannedBlock>>): Flow<List<Hazard>> {
         val allergensFlow = allergenDao.getActiveAllergens(activeAllergies)
         
         return ocrStream
             .debounce(300L)
             .distinctUntilChanged()
-            .combine(allergensFlow) { text, entities ->
-                if (text.length < 3) return@combine emptyList()
+            .combine(allergensFlow) { blocks, entities ->
+                val hazards = mutableListOf<Hazard>()
                 
-                entities.filter { entity ->
-                    text.contains(entity.ingredientName)
-                }.map { entity ->
-                    Hazard(
-                        ingredient = entity.ingredientName,
-                        matchedAllergen = entity.parentAllergen,
-                        severity = entity.severityLevel
-                    )
+                // Pour chaque bloc de texte détecté par la caméra
+                for (block in blocks) {
+                    // On vérifie s'il contient l'un de nos allergènes
+                    val matchedEntity = entities.find { entity -> 
+                        block.text.contains(entity.ingredientName) 
+                    }
+                    
+                    if (matchedEntity != null) {
+                        hazards.add(
+                            Hazard(
+                                ingredient = matchedEntity.ingredientName,
+                                matchedAllergen = matchedEntity.parentAllergen,
+                                severity = matchedEntity.severityLevel,
+                                boundingBox = block.boundingBox // On conserve les coordonnées !
+                            )
+                        )
+                    }
                 }
+                hazards
             }
     }
 }
