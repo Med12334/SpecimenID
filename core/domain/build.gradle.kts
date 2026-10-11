@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.specimenid.domain"
     compileSdk = 34
-
+    
     defaultConfig {
         minSdk = 24
     }
@@ -22,8 +22,14 @@ android {
 }
 
 dependencies {
+    // Dépendance interne
     implementation(project(":core:database"))
     
+    // Injection de dépendances
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    
+    // Réseau (Ajouté pour résoudre les erreurs Retrofit et GET)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 }
