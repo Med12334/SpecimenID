@@ -51,8 +51,11 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
 
-    // Missing Dependencies for MainActivity and DatabaseModule
+    // AndroidX & Jetpack
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
     implementation("androidx.room:room-runtime:2.6.1")
+    
+    // CameraX Core (Required for Hilt to resolve OcrAnalyzer's interface)
+    implementation(libs.camera.core)
 }
