@@ -7,6 +7,7 @@ import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.specimenid.domain.ScannedBlock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,8 +18,8 @@ class OcrAnalyzer : ImageAnalysis.Analyzer {
 
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     
-    private val _scannedTextFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val scannedTextFlow = _scannedTextFlow.asSharedFlow()
+    private val _scannedBlocksFlow = MutableSharedFlow<List<ScannedBlock>>(extraBufferCapacity = 1)
+    val scannedBlocksFlow = _scannedBlocksFlow.asSharedFlow()
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
@@ -29,10 +30,14 @@ class OcrAnalyzer : ImageAnalysis.Analyzer {
             textRecognizer.process(image)
                 .addOnSuccessListener { visionText ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        // \p{L} keeps all letters from any language (Arabic, French, etc.)
-                        val sanitized = visionText.text.lowercase().replace(Regex("[^\\p{L}\\p{N} ]"), "")
-                        if (sanitized.isNotBlank()) {
-                            _scannedTextFlow.emit(sanitized)
+                        val blocks = visionText.textBlocks.mapNotNull { block ->
+                            val sanitized = block.text.lowercase().replace(Regex("[^\\p{L}\\p{N} ]"), "")
+                            if (sanitized.isNotBlank()) {
+                                ScannedBlock(sanitized, block.boundingBox)
+                            } else null
+                        }
+                        if (blocks.isNotEmpty()) {
+                            _scannedBlocksFlow.emit(blocks)
                         }
                     }
                 }
