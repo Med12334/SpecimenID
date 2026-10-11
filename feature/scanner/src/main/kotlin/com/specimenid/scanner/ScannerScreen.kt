@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.specimenid.domain.Hazard
 
 @Composable
 fun ScannerScreen(viewModel: ScannerViewModel) {
@@ -73,6 +74,7 @@ fun ScannerScreen(viewModel: ScannerViewModel) {
                 is ScannerState.Scanning -> "Scanning..."
                 is ScannerState.Safe -> "Clear: No Allergens Detected"
                 is ScannerState.Danger -> "DANGER: Found ${state.hazards.joinToString { it.ingredient }}"
+                else -> "Unknown State"
             }
             Text(text = statusText, color = Color.White)
         }
