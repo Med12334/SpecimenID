@@ -8,17 +8,12 @@ plugins {
 android {
     namespace = "com.specimenid.vision"
     compileSdk = 34
-
-    defaultConfig {
-        minSdk = 24
-    }
+    defaultConfig { minSdk = 24 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 }
 
 dependencies {
@@ -28,6 +23,8 @@ dependencies {
     implementation(libs.camera.view)
     
     implementation(libs.mlkit.text.recognition)
+    // Nouvelle dépendance pour les codes-barres
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
     
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

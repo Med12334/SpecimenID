@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.specimenid.database.AllergenDao
 import com.specimenid.database.AllergenEntity
 import com.specimenid.database.SpecimenDatabase
+import com.specimenid.vision.BarcodeAnalyzer
 import com.specimenid.vision.OcrAnalyzer
 import dagger.Module
 import dagger.Provides
@@ -39,7 +40,6 @@ object DatabaseModule {
         .addCallback(object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                // Seed the database immediately after creation
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     provider.get().insertAll(
                         listOf(
@@ -67,4 +67,7 @@ object DatabaseModule {
 
     @Provides
     fun provideOcrAnalyzer(): OcrAnalyzer = OcrAnalyzer()
+    
+    @Provides
+    fun provideBarcodeAnalyzer(): BarcodeAnalyzer = BarcodeAnalyzer()
 }
