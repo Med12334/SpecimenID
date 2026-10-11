@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Required for scanning ingredients -->
-    <uses-feature android:name="android.hardware.camera.any" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.specimenid.app">
+    
+    <uses-feature android:name="android.hardware.camera" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name="com.specimenid.app.SpecimenApp"
-        android:allowBackup="false"
-        android:label="SpecimenID"
+        android:name=".SpecimenApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
-        
+        android:theme="@style/Theme.SpecimenID">
         <activity
-            android:name="com.specimenid.app.MainActivity"
-            android:exported="true">
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SpecimenID">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

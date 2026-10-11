@@ -4,33 +4,71 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.specimenid.domain.AnalyzeIngredientStreamUseCase
 import com.specimenid.domain.Hazard
+import com.specimenid.domain.network.OpenFoodFactsApi
+import com.specimenid.vision.BarcodeAnalyzer
 import com.specimenid.vision.OcrAnalyzer
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-sealed interface ScannerState {
-    data object Scanning : ScannerState
-    data object Safe : ScannerState
-    data class Danger(val hazards: List<Hazard>) : ScannerState
+sealed class ScannerState {
+    object Scanning : ScannerState()
+    object Safe : ScannerState()
+    data class Danger(val hazards: List<Hazard>) : ScannerState()
 }
 
 @HiltViewModel
 class ScannerViewModel @Inject constructor(
     val ocrAnalyzer: OcrAnalyzer,
-    analyzeStream: AnalyzeIngredientStreamUseCase
+    val barcodeAnalyzer: BarcodeAnalyzer,
+    private val analyzeUseCase: AnalyzeIngredientStreamUseCase,
+    private val api: OpenFoodFactsApi
 ) : ViewModel() {
 
-    val uiState: StateFlow<ScannerState> = analyzeStream(ocrAnalyzer.scannedTextFlow)
-        .map { hazards ->
-            if (hazards.isEmpty()) ScannerState.Safe else ScannerState.Danger(hazards)
+    private val _uiState = MutableStateFlow<ScannerState>(ScannerState.Scanning)
+    val uiState: StateFlow<ScannerState> = _uiState.asStateFlow()
+    
+    val isBarcodeMode = MutableStateFlow(false)
+
+    init {
+        // Écouteur pour le mode OCR (Texte)
+        viewModelScope.launch {
+            analyzeUseCase(ocrAnalyzer.scannedTextFlow).collect { hazards ->
+                if (!isBarcodeMode.value) {
+                    if (hazards.isNotEmpty()) _uiState.value = ScannerState.Danger(hazards)
+                    else _uiState.value = ScannerState.Safe
+                }
+            }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ScannerState.Scanning
-        )
+
+        // Écouteur pour le mode Code-barres (API)
+        viewModelScope.launch {
+            barcodeAnalyzer.scannedBarcodeFlow
+                .distinctUntilChanged()
+                .collect { barcode ->
+                    if (isBarcodeMode.value) {
+                        _uiState.value = ScannerState.Scanning
+                        try {
+                            // Appel réseau Retrofit
+                            val response = api.getProductByBarcode(barcode)
+                            val ingredients = response.product?.ingredients_text ?: ""
+                            
+                            // Analyse des ingrédients téléchargés
+                            analyzeUseCase(flowOf(ingredients.lowercase())).collect { hazards ->
+                                if (hazards.isNotEmpty()) _uiState.value = ScannerState.Danger(hazards)
+                                else if (ingredients.isNotBlank()) _uiState.value = ScannerState.Safe
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+        }
+    }
+    
+    fun toggleMode() {
+        isBarcodeMode.value = !isBarcodeMode.value
+        _uiState.value = ScannerState.Scanning
+    }
 }
