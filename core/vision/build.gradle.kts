@@ -17,13 +17,15 @@ android {
 }
 
 dependencies {
+    // Lien vers le module domaine pour accéder à ScannedBlock et Hazard
+    implementation(project(":core:domain"))
+
     implementation(libs.camera.core)
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
     
     implementation(libs.mlkit.text.recognition)
-    // Nouvelle dépendance pour les codes-barres
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     
     implementation(libs.hilt.android)
