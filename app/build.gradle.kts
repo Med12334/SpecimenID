@@ -17,45 +17,37 @@ android {
         versionName = "1.0"
     }
     
-    buildFeatures {
-        compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.9"
-    }
+    buildFeatures { compose = true }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.9" }
     
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 }
 
 dependencies {
-    // Project Modules
     implementation(project(":core:domain"))
     implementation(project(":core:database"))
     implementation(project(":core:vision"))
     implementation(project(":feature:scanner"))
     implementation(project(":feature:settings"))
 
-    // Hilt DI
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    // Compose Core
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
 
-    // AndroidX & Jetpack
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
     implementation("androidx.room:room-runtime:2.6.1")
-    
-    // CameraX Core (Required for Hilt to resolve OcrAnalyzer's interface)
     implementation(libs.camera.core)
+    
+    // New Network Dependencies
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 }
