@@ -29,14 +29,15 @@ class OcrAnalyzer : ImageAnalysis.Analyzer {
             textRecognizer.process(image)
                 .addOnSuccessListener { visionText ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        val sanitized = visionText.text.lowercase().replace(Regex("[^a-z0-9 ]"), "")
+                        // \p{L} keeps all letters from any language (Arabic, French, etc.)
+                        val sanitized = visionText.text.lowercase().replace(Regex("[^\\p{L}\\p{N} ]"), "")
                         if (sanitized.isNotBlank()) {
                             _scannedTextFlow.emit(sanitized)
                         }
                     }
                 }
                 .addOnCompleteListener {
-                    imageProxy.close() // CRITICAL: Frees the buffer
+                    imageProxy.close()
                 }
         } else {
             imageProxy.close()
