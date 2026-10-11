@@ -11,10 +11,6 @@ interface AllergenDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(allergens: List<AllergenEntity>)
 
-    @Query("""
-        SELECT * FROM allergen_dictionary 
-        WHERE allergen_dictionary MATCH :scannedOcrText 
-        AND parentAllergen IN (:userActiveAllergies)
-    """)
-    fun detectToxinsInText(scannedOcrText: String, userActiveAllergies: List<String>): Flow<List<AllergenEntity>>
+    @Query("SELECT * FROM allergen_dictionary WHERE parentAllergen IN (:userActiveAllergies)")
+    fun getActiveAllergens(userActiveAllergies: List<String>): Flow<List<AllergenEntity>>
 }
